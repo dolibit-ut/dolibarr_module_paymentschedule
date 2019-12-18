@@ -9,10 +9,31 @@ php:
   - 7.1
   - 7.2
 
-before_script:
-  - composer self-update
-  - composer install --prefer-source --no-interaction --dev
+install:
+- |
+    echo "Updating Composer"
+    rm $TRAVIS_BUILD_DIR/composer.json
+    rm $TRAVIS_BUILD_DIR/composer.lock
+    composer self-update
+    composer -n init
+    echo
 
-script: ./bin/phplint ./ --no-cache
+- |
+    echo "Installing Parallel Lint"
+    composer -n require jakub-onderka/php-parallel-lint ^0
+    composer -n require jakub-onderka/php-console-highlighter ^0
+    echo
+
+script:
+  - |
+    # ./bin/phplint ./ --no-cache
+    echo "Checking PHP syntax errors"
+    # Ensure we catch errors
+    set -e
+    #parallel-lint --exclude htdocs/includes --blame .
+    ./bin/parallel-lint --exclude htdocs/includes/sabre --exclude htdocs/includes/phpoffice/phpexcel/Classes/PHPExcel/Shared --exclude htdocs/includes/phpoffice/PhpSpreadsheet --exclude htdocs/includes/sebastian --exclude htdocs/includes/squizlabs/php_codesniffer/tests --exclude htdocs/includes/jakub-onderka/php-parallel-lint/tests --exclude htdocs/includes/mike42/escpos-php/example --exclude htdocs/includes/phpunit/php-token-stream/tests --exclude htdocs/includes/composer/autoload_static.php --blame .
+    set +e
+    echo
+
 matrix:
   fast_finish: true
